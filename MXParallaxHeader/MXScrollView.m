@@ -92,6 +92,21 @@ static void * const kMXScrollViewKVOContext = (void*)&kMXScrollViewKVOContext;
 #pragma mark <UIGestureRecognizerDelegate>
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    // Consider scroll view pan only
+    if (![otherGestureRecognizer.view isKindOfClass:[UIScrollView class]]) {
+        return NO;
+    }
+    
+    UIScrollView *scrollView = (id)otherGestureRecognizer.view;
+    
+    BOOL shouldScroll = YES;
+    if ([self.delegate respondsToSelector:@selector(scrollView:shouldScrollWithSubView:)]) {
+        shouldScroll = [self.delegate scrollView:self shouldScrollWithSubView:scrollView];;
+    }
+    
+    if (shouldScroll) {
+        [self addObservedView:scrollView];
+    }
     
     if (otherGestureRecognizer.view == self) {
         return NO;
@@ -108,25 +123,9 @@ static void * const kMXScrollViewKVOContext = (void*)&kMXScrollViewKVOContext;
         return NO;
     }
     
-    // Consider scroll view pan only
-    if (![otherGestureRecognizer.view isKindOfClass:[UIScrollView class]]) {
-        return NO;
-    }
-    
-    UIScrollView *scrollView = (id)otherGestureRecognizer.view;
-    
     // Tricky case: UITableViewWrapperView
     if ([scrollView.superview isKindOfClass:[UITableView class]]) {
         return NO;
-    }
-    
-    BOOL shouldScroll = YES;
-    if ([self.delegate respondsToSelector:@selector(scrollView:shouldScrollWithSubView:)]) {
-        shouldScroll = [self.delegate scrollView:self shouldScrollWithSubView:scrollView];;
-    }
-    
-    if (shouldScroll) {
-        [self addObservedView:scrollView];
     }
     
     return shouldScroll;
